@@ -66,10 +66,10 @@
       mode: '0644'
     when: ansible_os_family == "RedHat"
   
-  - name: Ensure Splunk Forwarder service is started
+  - name: Ensure Splunk Forwarder service is restarted
     systemd:
       name: SplunkForwarder
-      state: started
+      state: restarted
       enabled: yes
 
   - name: Copy credentials from playbook to target host
