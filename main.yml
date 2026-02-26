@@ -1,46 +1,49 @@
 - name: Install Splunk Universal Forwarder
   hosts: all
   become: true
-
   vars:
+    
+    splunk_uf_deb_url: "https://download.splunk.com/products/universalforwarder/releases/10.2.0/linux/splunkforwarder-10.2.0-d749cb17ea65-linux-amd64.deb"
     splunk_uf_rpm_url: "https://download.splunk.com/products/universalforwarder/releases/10.2.0/linux/splunkforwarder-10.2.0-d749cb17ea65.x86_64.rpm"
-    splunk_pass: "StrongPassword123"
+    splunk_pass: ""
 
   tasks:
 
-  - name: Create splunk group
-    group:
-      name: splunkfwd
-      state: present
-
-  - name: Create splunk user
-    user:
-      name: splunkfwd
-      group: splunkfwd
-      create_home: yes
-      shell: /bin/bash
-      state: present
-
+  - name: Create /opt/splunkforwarder 
+    file:
+      path: /opt/splunkforwarder
+      state: directory
+      mode: '0755'
+    
   - name: Download UF RPM
     get_url:
       url: "{{ splunk_uf_rpm_url }}"
-      dest: /tmp/splunkforwarder.rpm
+      dest: /opt/splunkforwarder/splunkforwarder.rpm
+    when: ansible_os_family == "RedHat"
+
+  - name: Download UF DEB
+    get_url:
+      url: "{{ splunk_uf_deb_url }}"
+      dest: /opt/splunkforwarder/splunkforwarder.deb
+    when: ansible_os_family == "Debian"
+
+  - name: Set correct permissions on Splunk RPM
+    file:
+      path: /opt/splunkforwarder/splunkforwarder.rpm
+      mode: '0644'
     when: ansible_os_family == "RedHat"
 
   - name: Install Splunk forwarder RPM
     yum:
-      name: /tmp/splunkforwarder.rpm
+      name: /opt/splunkforwarder/splunkforwarder.rpm
       state: present
       disable_gpg_check: yes
     when: ansible_os_family == "RedHat"
 
-  # 🔥 CRITICAL FIX
-  - name: Fix ownership of Splunk directory
-    file:
-      path: /opt/splunkforwarder
-      owner: splunkfwd
-      group: splunkfwd
-      recurse: yes
+  - name: Install UF DEB
+    apt:
+      deb: /opt/splunkforwarder/splunkforwarder.deb
+    when: ansible_os_family == "Debian"
 
   - name: Create user-seed.conf
     copy:
@@ -49,28 +52,25 @@
         [user_info]
         USERNAME = admin
         PASSWORD = {{ splunk_pass }}
-      owner: splunkfwd
-      group: splunkfwd
       mode: '0600'
-
-  # 🔥 RUN AS SPLUNK USER
-  - name: Start Splunk Forwarder (first boot)
+  
+  - name: Start Splunk Forwarder and accept license
     command: /opt/splunkforwarder/bin/splunk start --accept-license --answer-yes
-    become: true
-    become_user: splunkfwd
+    args:
+      creates: /opt/splunkforwarder/var/run/splunkd.pid
 
-  - name: Copy Splunk Cloud App
+
+  - name: Copy credentials from playbook to target host
     copy:
       src: splunkclouduf.spl
       dest: /tmp/splunkclouduf.spl
 
+
   - name: Install Splunk Cloud UF App
     command: >
       /opt/splunkforwarder/bin/splunk install app /tmp/splunkclouduf.spl -auth admin:{{ splunk_pass }}
-    become: true
-    become_user: splunkfwd
+    args:
+      creates: /opt/splunkforwarder/etc/apps/splunkclouduf
 
-  - name: Restart Splunk
-    command: /opt/splunkforwarder/bin/splunk restart
-    become: true
-    become_user: splunkfwd
+  - name: Start Splunk Forwarder and accept license
+    command: /opt/splunkforwarder/bin/splunk restart 
