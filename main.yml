@@ -65,8 +65,8 @@
 
   - name: Copy credentials from playbook to target host
     copy:
-      src: splunkclouduf.sql
-      dest: /tmp/splunkclouduf.sql
+      src: splunkclouduf.spl
+      dest: /tmp/splunkclouduf.spl
 
 
   - name: Install Splunk Cloud UF App
