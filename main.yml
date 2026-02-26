@@ -71,7 +71,7 @@
 
   - name: Install Splunk Cloud UF App
     command: >
-      /opt/splunkforwarder/bin/splunk install app /tmp/splunkclouduf.sql -auth admin:{{ splunk_pass }}
+      /opt/splunkforwarder/bin/splunk install app /tmp/splunkclouduf.spl -auth admin:{{ splunk_pass }}
     args:
       creates: /opt/splunkforwarder/etc/apps/splunkclouduf
 
