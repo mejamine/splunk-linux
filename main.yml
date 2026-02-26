@@ -65,7 +65,7 @@
 
   - name: Copy credentials from playbook to target host
     copy:
-      src: files/splunkclouduf.sql
+      src: splunkclouduf.sql
       dest: /tmp/splunkclouduf.sql
 
 
