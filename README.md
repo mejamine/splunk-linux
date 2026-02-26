@@ -1,21 +1,24 @@
-# Sysstat Installation and Configuration
+# Splunk Universal Forwarder Installation and Configuration
 
-This repository includes a playbook that installs and configures **sysstat** on Linux systems (Debian and RedHat families).  
+This repository includes a playbook that installs and configures the **Splunk Universal Forwarder (UF)** on Linux systems (Debian and RedHat families).  
 
-It ensures the package is installed, enabled, configured, and properly collecting performance statistics.
+It ensures the forwarder is installed, started, configured with an admin password, and the Splunk Cloud UF app is deployed.
 
 ---
 
 ## Tasks:
 
-- Check if sysstat is already installed  
-- Install sysstat package if not present  
-- Enable and start sysstat service  
-- Configure sysstat (Debian / RedHat families)  
-- Restart service after configuration  
-- Configure cron job for data collection (Debian)  
-- Enable systemd timer (if available)  
-- Validate installation using `sar -V`  
+- Create `splunkfwd` user and group  
+- Create `/opt/splunkforwarder` directory  
+- Download the Splunk UF package (RPM for RHEL, DEB for Debian)  
+- Set correct permissions on the downloaded package  
+- Install Splunk UF  
+- Set ownership of the forwarder directory to `splunkfwd`  
+- Start Splunk Forwarder and accept license  
+- Set Splunk admin password (from survey input)  
+- Copy Splunk Cloud UF credentials package from the playbook to the host  
+- Install the Splunk Cloud UF app using the admin credentials  
+- Restart Splunk Forwarder to apply changes  
 
 ---
 
@@ -26,13 +29,18 @@ It ensures the package is installed, enabled, configured, and properly collectin
 
 ---
 
-## Using in AAP
+## Using in AAP / Ansible
 
-### General Config :
+### General Config:
+
 1. **Inventory:** create from file or manually  
-2. **Credential:** SSH username/password + sudo  
+2. **Credential:** SSH username/password with sudo  
 
-No survey is required because this playbook does not depend on user-defined variables.
+### Survey:
+
+- `splunk_pass` → This is the Splunk Universal Forwarder admin password. It is intentionally left empty in the playbook and should be set via **survey** at runtime.  
+
+No other survey input is required as all other variables are predefined.
 
 ---
 
@@ -40,17 +48,24 @@ No survey is required because this playbook does not depend on user-defined vari
 
 ### Playbook Variables (already defined inside the playbook)
 
-- `sysstat_config_file_debian` → `/etc/default/sysstat`  
-- `sysstat_config_file_redhat` → `/etc/sysconfig/sysstat`  
-- `sysstat_enabled_value` → `"true"`  
+- `splunk_uf_deb_url` → URL for the Debian package of Splunk UF  
+- `splunk_uf_rpm_url` → URL for the RHEL package of Splunk UF  
+- `splunk_pass` → Splunk Forwarder admin password (to be provided via survey)  
+
 
 ---
 
-### Hosts variables : (in hosts.ini or create manually in AAP) (inventory related)
+### Hosts variables (inventory related)
 
-- `ansible_host` – ip address of the host  
-- `ansible_user` – username of the host user  
-- `ansible_os_family` – OS family (Debian / RedHat)  
+- `ansible_host` – IP address of the host  
+- `ansible_user` – SSH username for the host  
+- `ansible_os_family` – OS family (`Debian` / `RedHat`)  
 
+---
 
+## Notes:
 
+- The playbook is **idempotent**: it will not reinstall or overwrite if the forwarder or app is already present.  
+- The Splunk admin password is stored via **survey** and not hardcoded.  
+- Ownership of `/opt/splunkforwarder` is set to the `splunkfwd` user for proper forwarder operation.  
+- Ensure the Splunk Cloud UF credentials package (`splunkclouduf.spl`) is present in the `files/` directory of the playbook before running.
