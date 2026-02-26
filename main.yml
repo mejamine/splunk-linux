@@ -53,19 +53,24 @@
         USERNAME = admin
         PASSWORD = {{ splunk_pass }}
       mode: '0600'
-  
-  - name: create log file for splunk
-    file:
-      path: /opt/splunkforwarder/var/log/splunk/splunkd.log
-      state: touch
-      mode: '0644'
-    when: ansible_os_family == "RedHat"
       
   - name: Start Splunk Forwarder and accept license
     command: /opt/splunkforwarder/bin/splunk start --accept-license --answer-yes
     args:
       creates: /opt/splunkforwarder/var/run/splunkd.pid
 
+  - name: create log file for splunk
+    file:
+      path: /opt/splunkforwarder/var/log/splunk/splunkd.log
+      state: touch
+      mode: '0644'
+    when: ansible_os_family == "RedHat"
+  
+  - name: Ensure Splunk Forwarder service is started
+    systemd:
+      name: SplunkForwarder
+      state: started
+      enabled: yes
 
   - name: Copy credentials from playbook to target host
     copy:
