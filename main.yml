@@ -10,16 +10,7 @@
 
   tasks:
 
-  - name: Create splunk user
-    ansible.builtin.user:
-        name: "splunkfwd"
-        create_home: true
-        state: present
-      
-  - name: Create splunk group
-    ansible.builtin.group:
-        name: "splunkfwd"
-        state: present
+
 
   - name: Create /opt/splunkforwarder 
     file:
@@ -57,30 +48,26 @@
       deb: /opt/splunkforwarder/splunkforwarder.deb
     when: ansible_os_family == "Debian"
 
-  - name: Set ownership of Splunk Forwarder directory
-    file:
-      path: /opt/splunkforwarder
-      owner: splunkfwd
-      group: splunkfwd
-      recurse: yes
-
+  - name: Create user-seed.conf
+    copy:
+      dest: /opt/splunkforwarder/etc/system/local/user-seed.conf
+      content: |
+        [user_info]
+        USERNAME = admin
+        PASSWORD = {{ splunk_pass }}
+      mode: '0600'
+  
   - name: Start Splunk Forwarder and accept license
     command: /opt/splunkforwarder/bin/splunk start --accept-license --answer-yes
     args:
       creates: /opt/splunkforwarder/var/run/splunkd.pid
 
-  - name: Set Splunk admin password
-    command: >
-      /opt/splunkforwarder/bin/splunk edit user admin -password {{ splunk_pass }} -role admin -auth admin:changeme
-    args:
-        creates: /opt/splunkforwarder/etc/passwd
 
   - name: Copy credentials from playbook to target host
     copy:
       src: files/splunkclouduf.sql
       dest: /tmp/splunkclouduf.sql
-      owner: splunkfwd
-      group: splunkfwd
+
 
   - name: Install Splunk Cloud UF App
     command: >
