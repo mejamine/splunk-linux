@@ -10,7 +10,7 @@ It ensures the forwarder is installed, started, configured with an admin passwor
 
 
 - Create `/opt/splunkforwarder` directory  
-- Download the Splunk UF package (RPM for RHEL, DEB for Debian)  
+- Download the Splunk UF package 
 - Set correct permissions on the downloaded package  
 - Install Splunk UF    
 - Create user seed
@@ -26,7 +26,6 @@ It ensures the forwarder is installed, started, configured with an admin passwor
 ## Supported Operating Systems
 
 - Debian / Ubuntu  
-- RedHat / Fedora / CentOS  
 
 ---
 
@@ -50,7 +49,6 @@ No other survey input is required as all other variables are predefined.
 ### Playbook Variables (already defined inside the playbook)
 
 - `splunk_uf_deb_url` → URL for the Debian package of Splunk UF  
-- `splunk_uf_rpm_url` → URL for the RHEL package of Splunk UF  
 - `splunk_pass` → Splunk Forwarder admin password (to be provided via survey)  
 
 
@@ -60,7 +58,6 @@ No other survey input is required as all other variables are predefined.
 
 - `ansible_host` – IP address of the host  
 - `ansible_user` – SSH username for the host  
-- `ansible_os_family` – OS family (`Debian` / `RedHat`)  
 
 ---
 
