@@ -8,14 +8,15 @@ It ensures the forwarder is installed, started, configured with an admin passwor
 
 ## Tasks:
 
-- Create `splunkfwd` user and group  
+
 - Create `/opt/splunkforwarder` directory  
 - Download the Splunk UF package (RPM for RHEL, DEB for Debian)  
 - Set correct permissions on the downloaded package  
-- Install Splunk UF  
-- Set ownership of the forwarder directory to `splunkfwd`  
-- Start Splunk Forwarder and accept license  
-- Set Splunk admin password (from survey input)  
+- Install Splunk UF    
+- Create user seed
+- Start Splunk Forwarder and accept license 
+- Create log file 
+- Restart splunk forwarder
 - Copy Splunk Cloud UF credentials package from the playbook to the host  
 - Install the Splunk Cloud UF app using the admin credentials  
 - Restart Splunk Forwarder to apply changes  

@@ -1,0 +1,64 @@
+- name: Install Splunk Universal Forwarder
+  hosts: all
+  become: true
+  vars:
+    
+    splunk_uf_deb_url: "https://download.splunk.com/products/universalforwarder/releases/10.2.0/linux/splunkforwarder-10.2.0-d749cb17ea65-linux-amd64.deb"
+    splunk_pass: ""
+
+  tasks:
+
+  - name: Create /opt/splunkforwarder 
+    file:
+      path: /opt/splunkforwarder
+      state: directory
+      mode: '0755'
+    
+
+  - name: Download UF DEB
+    get_url:
+      url: "{{ splunk_uf_deb_url }}"
+      dest: /opt/splunkforwarder/splunkforwarder.deb
+
+  - name: Install UF DEB
+    apt:
+      deb: /opt/splunkforwarder/splunkforwarder.deb
+
+  - name: Create user-seed.conf
+    copy:
+      dest: /opt/splunkforwarder/etc/system/local/user-seed.conf
+      content: |
+        [user_info]
+        USERNAME = admin
+        PASSWORD = {{ splunk_pass }}
+      mode: '0600'
+      
+  - name: Start Splunk Forwarder and accept license
+    command: /opt/splunkforwarder/bin/splunk start --accept-license --answer-yes
+    args:
+      creates: /opt/splunkforwarder/var/run/splunkd.pid
+
+  - name: create log file for splunk
+    file:
+      path: /opt/splunkforwarder/var/log/splunk/splunkd.log
+      state: touch
+      mode: '0644'
+    when: ansible_os_family == "RedHat"
+  
+  - name: Restart Splunk Forwarder 
+    command: /opt/splunkforwarder/bin/splunk restart 
+
+  - name: Copy credentials from playbook to target host
+    copy:
+      src: splunkclouduf.spl
+      dest: /tmp/splunkclouduf.spl
+
+
+  - name: Install Splunk Cloud UF App
+    command: >
+      /opt/splunkforwarder/bin/splunk install app /tmp/splunkclouduf.spl -auth admin:{{ splunk_pass }}
+    args:
+      creates: /opt/splunkforwarder/etc/apps/splunkclouduf
+
+  - name: Start Splunk Forwarder and accept license
+    command: /opt/splunkforwarder/bin/splunk restart 
